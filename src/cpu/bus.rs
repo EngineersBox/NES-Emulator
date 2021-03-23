@@ -1,30 +1,21 @@
-
+use std::ptr::null;
 
 pub struct Bus {
-    cpu: cpu
+    cpu: cpu,
+    ram: [u8;2048] // change this later
 }
-
 impl Bus {
     fn new() -> Self {
-        Self {cpu: cpu::new()}
+        Self {cpu: cpu::new(), ram: [0x0000; 2048]}
+    }
+
+    // Read from RAM
+    fn read(&self, address: u16) -> u8 {
+        if check_hex_range(address){
+            return self.ram[address];
+        } else {
+            panic!("Tried to read from an illegal hex address")
+        }
     }
 }
 
-//
-// class Bus
-// {
-// public:
-// Bus();
-// ~Bus();
-//
-// public: // Devices on bus
-// olc6502 cpu;
-//
-// // Fake RAM for this part of the series
-// std::array<uint8_t, 64 * 1024> ram;
-//
-//
-// public: // Bus Read & Write
-// void write(uint16_t addr, uint8_t data);
-// uint8_t read(uint16_t addr, bool bReadOnly = false);
-// };
