@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-
-
 #[derive(Debug)]
 struct Registers {
     a: u8,      // Accumulator
@@ -25,7 +22,7 @@ pub enum StatusRegFlags{
 
 // Main CPU object
 pub struct CPU {
-    registers: Registers
+    pub registers: Registers
 }
 
 impl CPU {
@@ -39,14 +36,3 @@ impl CPU {
     // Resets registers to original state pre-boot
 
 }
-
-
-
-fn main() {}
-=======
-use crate::cpu::flags;
-
-pub struct CPU {
-    pub flags: Flags
-}
->>>>>>> 9db83f461627e0caf045e5ea82c860db32c2c738
