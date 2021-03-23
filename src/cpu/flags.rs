@@ -1,12 +1,12 @@
-type Flag = u8;
-
+// Defines the 8 flags for the status register
 #[derive(Debug)]
-pub struct Flags {
-    pub C: Flag, // Carry
-    pub Z: Flag, // Zero
-    pub I: Flag, // Interrupt Disable
-    pub D: Flag, // Decimal Mode
-    pub B: Flag, // Break Command
-    pub V: Flag, // Overflow
-    pub N: Flag, // Negative
+pub enum StatusRegFlags{
+    C = (1 << 0), // Carry bit
+    Z = (1 << 1), // Zero
+    I = (1 << 2), // Disable interrupt
+    D = (1 << 3), // Decimal mode
+    B = (1 << 4), // Break
+    U = (1 << 5), // Unused
+    V = (1 << 6), // Overflow
+    N = (1 << 7), // Negative
 }
