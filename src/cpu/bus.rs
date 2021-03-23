@@ -11,7 +11,7 @@ impl Bus {
 
     // Read from RAM
     fn read(&self, address: u16) -> u8 {
-        if check_hex_range(address){
+        if utils::check_hex_range(address){
             return self.ram[address];
         } else {
             panic!("Tried to read from an illegal hex address")
