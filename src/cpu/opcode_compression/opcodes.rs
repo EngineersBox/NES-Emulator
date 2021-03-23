@@ -25,29 +25,35 @@ fn decode_base64(value: u32) -> u32 {
     }
 }
 
-macro_rules! t {
-    ($pattern:expr, $index:expr, $bitmask:expr, $result:stmt) => {
-        if (decode_base64(char_to_u32($pattern.chars().nth($index as usize).unwrap())) & $bitmask) == 0 {
-            println!("{}", $pattern);
-            $result
-        }
-    };
-}
-
 // For example:
 // 0b00000011:
 // - zAAAAAAAAAAA = ADD b
 // - iAAAAAAAAAAA = ADD c
 pub fn execute_instruction(registers: &mut Registers, opcode: Opcode) {
     let mut temp: u32 = 0;
-    let index: u32 = opcode / 6u32;
-    let bitmask: u32 = 1u32 << (opcode % 6u32);
 
-    t!(String::from("/DAAAAAAAAAA"), index, bitmask, temp = registers.a);  // LDR a  (opcodes: 0,1,2,3,4,5,6,7)
-    t!(String::from("zAAAAAAAAAAA"), index, bitmask, temp += registers.b); // ADD b  (opcodes: 0,1,    4,5,   )
-    t!(String::from("MDAAAAAAAAAA"), index, bitmask, temp -= registers.b); // SUB b  (opcodes:     2,3,    6,7)
-    t!(String::from("iAAAAAAAAAAA"), index, bitmask, temp += registers.c); // ADD c  (opcodes:   1,      5,   )
-    t!(String::from("ICAAAAAAAAAA"), index, bitmask, temp -= registers.c); // SUB c  (opcodes:       3,      7)
-    t!(String::from("/DAAAAAAAAAA"), index, bitmask, registers.a = temp);  // STR a  (opcodes: 0,1,2,3,4,5,6,7)
-    t("PAAAAAAAAAAA", index, bitmask, temp = registers.a);                 // UPD F  (opcodes: 0,1,2,3        )
+    macro_rules! t {
+    ($pattern:expr, $result:stmt) => {
+        if (decode_base64(char_to_u32($pattern.chars().nth((opcode / 6u32) as usize).unwrap())) & (1u32 << (opcode % 6u32))) == 0 {
+            $result
+        }
+    };
 }
+
+    t!(String::from("/DAAAAAAAAAA"), temp = registers.a);  // LDR a  (opcodes: 0,1,2,3,4,5,6,7)
+    t!(String::from("zAAAAAAAAAAA"), temp += registers.b); // ADD b  (opcodes: 0,1,    4,5,   )
+    t!(String::from("MDAAAAAAAAAA"), temp -= registers.b); // SUB b  (opcodes:     2,3,    6,7)
+    t!(String::from("iAAAAAAAAAAA"), temp += registers.c); // ADD c  (opcodes:   1,      5,   )
+    t!(String::from("ICAAAAAAAAAA"), temp -= registers.c); // SUB c  (opcodes:       3,      7)
+    t!(String::from("/DAAAAAAAAAA"), registers.a = temp);  // STR a  (opcodes: 0,1,2,3,4,5,6,7)
+    t!(String::from("PAAAAAAAAAAA"), temp = registers.a);  // UPD F  (opcodes: 0,1,2,3        )
+}
+
+// AN EXAMPLE USAGE:
+// ------------------------------------------------------------------------
+// fn main() {
+//     let mut reg: Registers = Registers{a: 0u32, b: 1u32, c: 1u32};
+//     let opcode: Opcode = 0b00000011u32; // 3: LDR a, ADD b, ADD c, STR a
+//     execute_instruction(&mut reg, opcode);
+//     println!("{:?}", reg);
+// }
