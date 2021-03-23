@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 
 
 #[derive(Debug)]
@@ -42,3 +43,10 @@ impl CPU {
 
 
 fn main() {}
+=======
+use crate::cpu::flags;
+
+pub struct CPU {
+    pub flags: Flags
+}
+>>>>>>> 9db83f461627e0caf045e5ea82c860db32c2c738
