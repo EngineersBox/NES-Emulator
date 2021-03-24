@@ -1,4 +1,5 @@
 use std::ptr::null;
+use crate::cpu::utils;
 
 pub struct Bus {
     cpu: cpu,
