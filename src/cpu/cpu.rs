@@ -99,6 +99,28 @@ impl CPU {
         self.registers.set_flag(StatusRegFlags::N, self.registers.a & 0x80 != 0);
         return 1
     }
+
+    // Arithmetic Shift Left
+    pub fn ASL(&mut self) -> u8 {
+        // Fetch data
+        let fetched: u16 = self.registers.fetched as u16;
+        // Shift left 1
+        let shifted = fetched << 1;
+        // Set carry flag if bit 8 == 1 (old bit 7 == 1)
+        self.registers.set_flag(StatusRegFlags::C, shifted & 0xFF00 != 0);
+        // Zero flag set if result equals 0
+        self.registers.set_flag(StatusRegFlags::Z, shifted == 0x00);
+        // Negative flag is set if the most significant bit of the result is set
+        self.registers.set_flag(StatusRegFlags::N, shifted & 0x80 != 0);
+
+        // TODO: need to build the address mode functions
+        //
+        // If ASL address mode == implied, then set a = shifted & 0x00FF
+        // else write shifted & 0x00FF to the abs address chosen with
+        return 1
+    }
+
+
 }
 
 
