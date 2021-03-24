@@ -1,5 +1,6 @@
 use crate::cpu::flags::StatusRegFlags;
 use crate::cpu::registers::Registers;
+use test::TestFn::StaticBenchFn;
 
 type Opcode = u32;
 
@@ -85,4 +86,22 @@ impl CPU {
         // Some variants of the SBC op have additional cycles
         return 1;
     }
+
+    // Bitwise AND
+    pub fn AND(&mut self) -> u8 {
+        // Fetch data
+        let fetched: u16 = self.registers.fetched as u16;
+        // Peform AND with data and data in accumulator
+        self.registers.a = a & fetched;
+        // Zero flag set if result equals 0
+        self.registers.set_flag(StatusRegFlags::Z, self.registers.a == 0x00);
+        // Negative flag is set if the most significant bit of the result is set
+        self.registers.set_flag(StatusRegFlags::N, self.registers.a & 0x80 != 0);
+        return 1
+    }
 }
+
+
+
+
+
