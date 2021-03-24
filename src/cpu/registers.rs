@@ -13,10 +13,10 @@ pub struct Registers {
 
 impl Registers {
     pub fn get_flag(&self, flag: StatusRegFlags) -> u8 {
-        return ternary!(((self.status & flag) > 0), 1, 0)
+        return ternary!(((self.status & flag) > 0), 1, 0);
     }
 
     pub fn set_flag(&mut self, flag: StatusRegFlags, value: bool) {
-        ternary!(value, self.registers.status |= flag, self.registers.status &= flag)
+        ternary!(value, self.registers.status |= flag, self.registers.status &= flag);
     }
 }

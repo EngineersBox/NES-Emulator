@@ -60,10 +60,27 @@ impl CPU {
         // Signed overflow is set on the condition if the carry is set and the result exceeds an XOR with the first value
         self.registers.set_flag(StatusRegFlags::V, ((((self.registers.a as u16) ^ (self.registers.fetched as u16)) & ((self.registers.a as u16) ^ temp)) & 0x0080) == 0);
         // Negative flag is set when the most significant bit is set
-        self.registers.set_flag(StatusRegFlags::N, temp & 0x80 == 0);
+        self.registers.set_flag(StatusRegFlags::N, temp & 0x0080 == 0);
         // Mask off the last 2 bytes into the 8-bit accumulator
         self.registers.a = (temp & 0x00FF) as u8;
         // Some variants of the ADC op have additional cycles
+        return 1;
+    }
+
+    pub fn SBC(&mut self) -> u8 {
+        let inverted_fetched: u16 = (self.registers.fetched as u16) ^ 0x00FF;
+        let mut temp: u16 = (self.registers.a as u16) + inverted_fetched + (self.registers.get_flag(StatusRegFlags::C) as u16);
+        // Carry flag is set when upper bits (8-16) have a value
+        self.registers.set_flag(StatusRegFlags::C, temp & 0xFF00 != 0);
+        // Zero flag is set when result is 0
+        self.registers.set_flag(StatusRegFlags::Z, (temp & 0x00FF) == 0);
+        // Signed overflow is set on the condition if there is wrap around underflow
+        self.registers.set_flag(StatusRegFlags::V, ((temp ^ (self.registers.a as u16)) & (temp ^ inverted_fetched)) == 0);
+        // Negative flag is set when the most significant bit is set
+        self.registers.set_flag(StatusRegFlags::N, (temp & 0x0080) == 0);
+        // Mask off the last 1 bytes into the 8-bit accumulator
+        self.registers.a = (temp & 0x00FF) as u8;
+        // Some variants of the SBC op have additional cycles
         return 1;
     }
 }
