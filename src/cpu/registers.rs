@@ -16,7 +16,7 @@ impl Registers {
         return ternary!(((self.status & flag) > 0), 1, 0);
     }
 
-    pub fn set_flag(&mut self, flag: StatusRegFlags, value: bool) {
-        ternary!(value, self.registers.status |= flag, self.registers.status &= flag);
+    pub fn set_flag(&mut self, flag: StatusRegFlags, condition: bool) {
+        ternary!(condition, self.registers.status |= flag, self.registers.status &= flag);
     }
 }

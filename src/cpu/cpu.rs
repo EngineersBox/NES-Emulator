@@ -51,6 +51,7 @@ impl CPU {
     // For example:
     // |_| -> () { fetch(); self.operations.ADC(); }
 
+    // Add with carry
     pub fn ADC(&mut self) -> u8 {
         let mut temp: u16 = (self.registers.a as u16) + (self.registers.fetched as u16) + (self.registers.get_flag(StatusRegFlags::C) as u16);
         // Carry flag is set when addition exceeds 255 (into bit 9)
@@ -67,6 +68,7 @@ impl CPU {
         return 1;
     }
 
+    // Subtract with carry
     pub fn SBC(&mut self) -> u8 {
         let inverted_fetched: u16 = (self.registers.fetched as u16) ^ 0x00FF;
         let mut temp: u16 = (self.registers.a as u16) + inverted_fetched + (self.registers.get_flag(StatusRegFlags::C) as u16);
@@ -77,7 +79,7 @@ impl CPU {
         // Signed overflow is set on the condition if there is wrap around underflow
         self.registers.set_flag(StatusRegFlags::V, ((temp ^ (self.registers.a as u16)) & (temp ^ inverted_fetched)) == 0);
         // Negative flag is set when the most significant bit is set
-        self.registers.set_flag(StatusRegFlags::N, (temp & 0x0080) == 0);
+        self.registers.set_flag(StatusRegFlags::N, (temp & 0x0080) != 0);
         // Mask off the last 1 bytes into the 8-bit accumulator
         self.registers.a = (temp & 0x00FF) as u8;
         // Some variants of the SBC op have additional cycles
