@@ -33,7 +33,7 @@ pub fn execute_instruction(registers: &mut Registers, opcode: Opcode) {
     let mut temp: u32 = 0;
 
     macro_rules! t {
-        ($pattern:expr, $result:stmt) => {
+        ($pattern: expr, $result: stmt) => {
             if (decode_base64(char_to_u32($pattern.chars().nth((opcode / 6u32) as usize).unwrap())) & (1u32 << (opcode % 6u32))) == 0 {
                 $result
             }
