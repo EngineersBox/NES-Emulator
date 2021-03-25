@@ -1,12 +1,17 @@
 use crate::cpu::flags::StatusRegFlags;
 use crate::cpu::registers::Registers;
+use crate::cpu::bus::Bus;
 use test::TestFn::StaticBenchFn;
 
 type Opcode = u32;
 
 // Main CPU object
 pub struct CPU {
-    pub registers: Registers
+    pub registers: Registers,
+    pub bus: Bus,
+
+    // Addressing variables
+    pub addr_imp: u16,
 }
 
 // CPU methods
@@ -16,8 +21,14 @@ impl CPU {
         // Initialise registers
         Self {
             registers: Registers { a: 0x00, x: 0x00, y: 0x00, pc: 0x0000, sp: 0x00, status: 0x00, fetched: 0},
+            bus: Bus::new(),
+            addr_imp: 0x0000
         }
     }
+
+   pub fn read(&self, address: u16) -> u16 {
+        return self.bus.read(address);
+   }
 
     // Reset CPU to default state
     // Registers set as per:
@@ -51,6 +62,50 @@ impl CPU {
     //
     // For example:
     // |_| -> () { fetch(); self.operations.ADC(); }
+
+
+    /*
+
+     ADDRESSING MODE IMPLEMENTATIONS
+
+     If addressing mode func and instruction return 1, then extra cycle required
+     // TODO implement this in instructions
+
+
+     */
+
+
+    // Accumulator (also called Implied)
+    // May not be used
+    pub fn ACC(&mut self) -> u8 {
+        self.registers.fetched = self.registers.a;
+        return 1;
+    }
+
+    // Immediate Addressing // TODO NOT SURE IF THIS IS RIGHT
+    pub fn IMM(&mut self) -> u8 {
+        self.registers.pc += 1;
+        self.addr_imp = self.registers.pc;
+        return 0;
+    }
+
+    // Absolute Addressing
+    pub fn ABS(&mut self) -> u8 {
+        addrL: u16 = self.read(self.registers.pc as u16);
+        self.registers.pc += 1;
+        addrH: u16 = self.read(self.registers.pc as u16);
+        self.registers.pc += 1;
+        self.addr_imp = addrL + (addrH << 8);
+
+        return 0;
+    }
+
+
+    /*
+
+    INSTRUCTIONS IMPLEMENTATIONS
+
+    */
 
     // Add with carry
     pub fn ADC(&mut self) -> u8 {
@@ -119,8 +174,6 @@ impl CPU {
         // else write shifted & 0x00FF to the abs address chosen with
         return 1
     }
-
-
 }
 
 
