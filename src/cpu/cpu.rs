@@ -40,16 +40,19 @@ impl CPU {
         self.registers.x = 0x00;
         self.registers.y = 0x00;
         self.registers.sp = 0xFD;
-
+        self.registers.fetched = 0x00;
         // Set program counter by reading from reset vector (0xFFFD - 0xFFFC)
         self.registers.pc = (bus::read(0xFFFD) << 8) + bus::read(0xFFFC);
 
-        // Set status flags
+        // TODO Set status flags on reset
     }
 
-    fn fetch(&mut self) -> u8 {
-        // TODO: Implement this method for the FDE cycle
-        0
+
+    // Function fetches data from memory and sets the fetched register to the data
+    fn fetch(&mut self, &addrMode: String) -> () {
+        if addrMode == "IMP" {
+            self.registers.fetched = self.bus.read(self.addr_imp) as u8;
+        }
     }
 
     pub fn execute_instruction(&mut self, opcode: Opcode) {
