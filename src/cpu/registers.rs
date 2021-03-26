@@ -1,4 +1,5 @@
 use crate::cpu::flags::StatusRegFlags;
+use crate::ternary;
 
 #[derive(Debug)]
 pub struct Registers {
@@ -13,10 +14,10 @@ pub struct Registers {
 
 impl Registers {
     pub fn get_flag(&self, flag: StatusRegFlags) -> u8 {
-        return ternary!(((self.status & flag) > 0), 1, 0);
+        return ternary!(((self.status & (flag as u8)) > 0), 1, 0);
     }
 
     pub fn set_flag(&mut self, flag: StatusRegFlags, condition: bool) {
-        ternary!(condition, self.registers.status |= flag, self.registers.status &= flag);
+        ternary!(condition, self.status |= (flag as u8), self.status &= (flag as u8));
     }
 }

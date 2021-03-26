@@ -2,7 +2,7 @@ use std::ptr::null;
 use crate::cpu::utils;
 
 pub struct Bus {
-    ram: [u8;2048] // change this later
+    ram: [u16;2048] // change this later
 }
 impl Bus {
     pub fn new() -> Self {
@@ -12,7 +12,7 @@ impl Bus {
     // Read from RAM
     pub fn read(&self, address: u16) -> u16 {
         if utils::check_hex_range(address){
-            return self.ram[address];
+            return self.ram[address as usize];
         } else {
             panic!("Tried to read from an illegal hex address")
         }
