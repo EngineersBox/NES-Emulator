@@ -5,6 +5,8 @@ use test::TestFn::StaticBenchFn;
 
 type Opcode = u32;
 
+static PAGE_SIZE: u8 = 0xFF;
+
 // Main CPU object
 pub struct CPU {
     pub registers: Registers,
@@ -88,13 +90,12 @@ impl CPU {
 
 
     // Implied Addressing
-    // May not be used
     pub fn ACC(&mut self) -> u8 {
         self.registers.fetched = self.registers.a;
         return 1;
     }
 
-    // Immediate Addressing // TODO NOT SURE IF THIS IS RIGHT
+    // Immediate Addressing
     pub fn IMM(&mut self) -> u8 {
         self.registers.pc += 1;
         self.addr_abs = self.registers.pc;
@@ -109,6 +110,30 @@ impl CPU {
         self.registers.pc += 1;
         self.addr_abs = addrL + (addrH << 8);
 
+        return 0;
+    }
+
+    // Zero Page Addressing
+    pub fn ZP0(&mut self) -> u8 {
+        self.addr_abs = self.read(self.registers.pc);
+        self.registers.pc += 1;
+        self.addr_abs &= PAGE_SIZE;
+        return 0;
+    }
+
+    // Zero Page With X Offset
+    pub fn ZPX(&mut self) -> u8 {
+        self.addr_abs = self.read(self.registers.pc + self.registers.x);
+        self.registers.pc += 1;
+        self.addr_abs &= PAGE_SIZE;
+        return 0;
+    }
+
+    // Zero Page With Y Offset
+    pub fn ZPY(&mut self) -> u8 {
+        self.addr_abs = self.read(self.registers.pc + self.registers.y);
+        self.registers.pc += 1;
+        self.addr_abs &= PAGE_SIZE;
         return 0;
     }
 
@@ -196,6 +221,15 @@ impl CPU {
         }
         return 0;
     }
+    // Branch if carry set
+    pub fn BCS(&mut self) -> u8 {
+        if self.registers.get_flag(StatusRegFlags::C) == 1 {
+            self.addr_abs = self.registers.pc + self.addr_rel;
+            self.registers.pc = self.addr_abs;
+        }
+        return 0;
+    }
+
 }
 
 
