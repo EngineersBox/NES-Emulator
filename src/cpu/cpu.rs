@@ -188,6 +188,14 @@ impl CPU {
         return 1
     }
 
+    // Branch if carry clear
+    pub fn BCC(&mut self) -> u8 {
+        if self.registers.get_flag(StatusRegFlags::C) == 0 {
+            self.addr_abs = self.registers.pc + self.addr_rel;
+            self.registers.pc = self.addr_abs;
+        }
+        return 0;
+    }
 }
 
 
