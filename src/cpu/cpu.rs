@@ -11,7 +11,12 @@ pub struct CPU {
     pub bus: Bus,
 
     // Addressing variables
-    pub addr_imp: u16,
+    pub addr_abs: u16, // absolute address
+    pub addr_rel: u8, // relative address
+
+    // Utility variables
+    pub cycles: u8, // instruction cycle counter
+    pub cpu_cycles: u8 // overall global cycle counter
 }
 
 // CPU methods
@@ -22,7 +27,11 @@ impl CPU {
         Self {
             registers: Registers { a: 0x00, x: 0x00, y: 0x00, pc: 0x0000, sp: 0x00, status: 0x00, fetched: 0},
             bus: Bus::new(),
-            addr_imp: 0x0000
+            addr_abs: 0x0000,
+            addr_rel: 0x00,
+            cycles: 0,
+            cpu_cycles: 0,
+
         }
     }
 
@@ -51,7 +60,7 @@ impl CPU {
     // Function fetches data from memory and sets the fetched register to the data
     fn fetch(&mut self, &addrMode: String) -> () {
         if addrMode == "IMP" {
-            self.registers.fetched = self.bus.read(self.addr_imp) as u8;
+            self.registers.fetched = self.bus.read(self.addr_abs) as u8;
         }
     }
 
@@ -78,7 +87,7 @@ impl CPU {
      */
 
 
-    // Accumulator (also called Implied)
+    // Implied Addressing
     // May not be used
     pub fn ACC(&mut self) -> u8 {
         self.registers.fetched = self.registers.a;
@@ -88,7 +97,7 @@ impl CPU {
     // Immediate Addressing // TODO NOT SURE IF THIS IS RIGHT
     pub fn IMM(&mut self) -> u8 {
         self.registers.pc += 1;
-        self.addr_imp = self.registers.pc;
+        self.addr_abs = self.registers.pc;
         return 0;
     }
 
@@ -98,10 +107,11 @@ impl CPU {
         self.registers.pc += 1;
         addrH: u16 = self.read(self.registers.pc as u16);
         self.registers.pc += 1;
-        self.addr_imp = addrL + (addrH << 8);
+        self.addr_abs = addrL + (addrH << 8);
 
         return 0;
     }
+
 
 
     /*
@@ -177,6 +187,7 @@ impl CPU {
         // else write shifted & 0x00FF to the abs address chosen with
         return 1
     }
+
 }
 
 
