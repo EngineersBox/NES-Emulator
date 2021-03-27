@@ -1,6 +1,8 @@
 use crate::cpu::flags::StatusRegFlags;
 use crate::cpu::registers::Registers;
 use crate::cpu::bus;
+use crate::ternary;
+
 
 type Opcode = u32;
 
@@ -110,6 +112,34 @@ impl CPU {
         self.addr_abs = addr_l + (addr_h << 8);
 
         return 0;
+    }
+
+    // Absolute with offset X addressing mode
+    pub fn ABX(&mut self) -> u8 {
+        // Convert low and high to u16
+        let addr_l: u16 = self.read(self.registers.pc as u16);
+        self.registers.pc += 1;
+        let addr_h: u16 = self.read(self.registers.pc as u16);
+        self.registers.pc += 1;
+        self.addr_abs = addr_l + (addr_h << 8); // concat two u8 -> u16
+        self.addr_abs += self.registers.x; // offset by x register
+
+        // If bytes haven't finished addition, add an extra cycle // TODO WHY
+        return ternary!(((self.addr_abs & 0xFF00) != (addr_h << 8)), 1, 0);
+    }
+
+    // Absolute with offset Y addressing mode
+    pub fn ABY(&mut self) -> u8 {
+        // Convert low and high to u16
+        let addr_l: u16 = self.read(self.registers.pc as u16);
+        self.registers.pc += 1;
+        let addr_h: u16 = self.read(self.registers.pc as u16);
+        self.registers.pc += 1;
+        self.addr_abs = addr_l + (addr_h << 8); // concat two u8 -> u16
+        self.addr_abs += self.registers.y; // offset by y register
+
+        // If bytes haven't finished addition, add an extra cycle // TODO WHY
+        return ternary!(((self.addr_abs & 0xFF00) != (addr_h << 8)), 1, 0);
     }
 
     // Zero Page Addressing
