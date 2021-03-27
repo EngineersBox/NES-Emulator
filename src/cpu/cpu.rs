@@ -89,7 +89,7 @@ impl CPU {
 
 
     // Implied Addressing
-    pub fn ACC(&mut self) -> u8 {
+    pub fn IMP(&mut self) -> u8 {
         self.registers.fetched = self.registers.a;
         return 1;
     }
@@ -133,6 +133,18 @@ impl CPU {
         self.addr_abs = self.read(self.registers.pc + self.registers.y as u16);
         self.registers.pc += 1;
         self.addr_abs &= PAGE_SIZE;
+        return 0;
+    }
+
+    // Relative Addressing (used for branching)
+    // Can branch -128 to 128 away from pc
+    pub fn REL(&mut self) -> u8 {
+        self.addr_rel = self.read(self.registers.pc as u16) as u8;
+        self.registers.pc += 1;
+        // Checking first bit set to 1 (i.e. signed)
+        if self.addr_rel & 0x80{
+            self.addr_rel |= 0xFF00;
+        }
         return 0;
     }
 
