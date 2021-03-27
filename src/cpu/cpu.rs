@@ -16,6 +16,7 @@ pub struct CPU {
     // Addressing variables
     pub addr_abs: u16, // absolute address
     pub addr_rel: u8, // relative address
+    pub addr_temp: u16, // temporary address storage variable
 
     // Utility variables
     pub cycles: u8, // instruction cycle counter
@@ -32,6 +33,7 @@ impl CPU {
             bus: bus::Bus::new(),
             addr_abs: 0x0000,
             addr_rel: 0x00,
+            addr_temp: 0x0000,
             cycles: 0,
             cpu_cycles: 0,
 
@@ -61,10 +63,11 @@ impl CPU {
 
 
     // Function fetches data from memory and sets the fetched register to the data
-    fn fetch(&mut self, addrMode: &String) -> () {
+    fn fetch(&mut self, addrMode: &String) -> u8 {
         if addrMode == "IMP" {
             self.registers.fetched = self.bus.read(self.addr_abs) as u8;
         }
+        return self.registers.fetched
     }
 
     pub fn execute_instruction(&mut self, opcode: Opcode) {
@@ -312,7 +315,12 @@ impl CPU {
     // Branch if carry clear
     pub fn BCC(&mut self) -> u8 {
         if self.registers.get_flag(StatusRegFlags::C) == 0 {
+            self.cycles += 1;
             self.addr_abs = self.registers.pc + (self.addr_rel as u16);
+            // If over zero page?
+            if (self.addr_abs & 0xFF00) != (self.registers.pc & 0xFF00){
+                self.cycles += 1
+            }
             self.registers.pc = self.addr_abs;
         }
         return 0;
@@ -321,11 +329,88 @@ impl CPU {
     // Branch if carry set
     pub fn BCS(&mut self) -> u8 {
         if self.registers.get_flag(StatusRegFlags::C) == 1 {
+            self.cycles += 1;
             self.addr_abs = self.registers.pc + (self.addr_rel as u16);
+            // If over zero page?
+            if (self.addr_abs & 0xFF00) != (self.registers.pc & 0xFF00){
+                self.cycles += 1
+            }
             self.registers.pc = self.addr_abs;
         }
         return 0;
     }
+
+    // Branch if equal
+    pub fn BEQ(&mut self) -> u8 {
+        if self.registers.get_flag(StatusRegFlags::Z) == 1 {
+            self.cycles += 1;
+            self.addr_abs = self.registers.pc + (self.addr_rel as u16);
+            // If over zero page?
+            if (self.addr_abs & 0xFF00) != (self.registers.pc & 0xFF00){
+                self.cycles += 1
+            }
+            self.registers.pc = self.addr_abs;
+        }
+        return 0;
+    }
+
+    // Test if one or more bits are set at the address (sets the zero flag)
+    pub fn BIT(&mut self) -> u8 {
+        self.fetch(&String::from("ABS"));
+        self.addr_temp = self.read.a & self.registers.fetched;
+        self.registers.set_flag(StatusRegFlags::N,  self.registers.fetched & (1 << 7) != 0);
+        self.registers.set_flag(StatusRegFlags::V,  self.registers.fetched & (1 << 7) != 0);
+        self.registers.set_flag(StatusRegFlags::Z,  addr_temp & 0x00FF == 0x00);
+        return 0;
+    }
+
+    // Branch if minus
+    // If negative flag set, set absolute address, check if zero page overflow
+    // then set pc = addr_abs
+    pub fn BMI(&mut self) -> u8 {
+        if self.registers.get_flag(StatusRegFlags::N) == 1 {
+            self.cycles += 1;
+            self.addr_abs = self.registers.pc + self.addr_rel;
+            // If over zero page?
+            if (self.addr_abs & 0xFF00) != (self.registers.pc & 0xFF00){
+                self.cycles += 1
+            }
+            self.registers.pc = self.addr_abs;
+        }
+        return 0;
+    }
+
+    // Branch if positive
+    pub fn BPL(&mut self) -> u8 {
+        if self.registers.get_flag(StatusRegFlags::N) == 0 {
+            self.cycles += 1;
+            self.addr_abs = self.registers.pc + self.addr_rel;
+            // If over zero page?
+            if (self.addr_abs & 0xFF00) != (self.registers.pc & 0xFF00){
+                self.cycles += 1
+            }
+            self.registers.pc = self.addr_abs;
+        }
+        return 0;
+    }
+
+    // Branch if not equal
+    // Similar logic to BMI except with zero flag clear.
+    pub fn BNE(&mut self) -> u8 {
+
+        if self.registers.get_flag(StatusRegFlags::Z) == 0 {
+            self.cycles += 1;
+            self.addr_abs = self.registers.pc + self.addr_rel;
+            // If over zero page?
+            if (self.addr_abs & 0xFF00) != (self.registers.pc & 0xFF00){
+                self.cycles += 1
+            }
+            self.registers.pc = self.addr_abs;
+        }
+        return 0;
+    }
+
+
 
 }
 
