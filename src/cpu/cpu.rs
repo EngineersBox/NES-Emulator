@@ -177,6 +177,61 @@ impl CPU {
         }
         return 0;
     }
+    // Indirect Addressing (pointer)
+    pub fn IND(&mut self) -> u8 {
+        // Construct pointer from low / high byte in pc
+        let ptr_l: u16 = self.read(self.registers.pc as u16);
+        self.registers.pc += 1;
+        let ptr_h: u16 = self.read(self.registers.pc as u16);
+        self.registers.pc += 1;
+        let ptr: u16 = ptr_l + (ptr_h << 8);
+
+        // REPLICATE 6502 INDIRECT ADDRESSING BUG
+        if ptr_l == 0xFF00 {
+            self.addr_abs = (self.read(ptr & 0xFF00) << 8) | self.read(ptr + 0);
+        } else {
+            // Normal
+            self.addr_abs = (self.read(ptr + 1) << 8) | self.read(ptr + 0);
+        }
+        return 0;
+    }
+
+    // Indirect with X offset Addressing (pointer)
+    pub fn INX(&mut self) -> u8 {
+        // Obtain the data (= another address) at the pc address
+        temp: u16 = self.read(self.registers.pc as u16);
+        self.registers.pc += 1;
+        // Offset address and ensure it is in the zero page (with mask)
+        addr_l: u16 = self.read((temp + (self.registers.x as u16)) & 0x00FF);
+        addr_h: u16 = self.read((temp + (self.registers.x as u16) + 1) & 0x00FF);
+
+        // Concat into full 16 bit address
+        self.addr_abs = (addr_h << 8 | addr_l);
+
+
+        return 0;
+    }
+
+    // Indirect with Y offset Addressing (pointer)
+    // Slightly different to X offset - offset after
+    // 16 bit address is created (not during).
+    pub fn INY(&mut self) -> u8 {
+        // Obtain the data (= another address) at the pc address
+        temp: u16 = self.read(self.registers.pc as u16);
+        self.registers.pc += 1;
+        // Offset address and ensure it is in the zero page (with mask)
+        addr_l: u16 = self.read(temp  & 0x00FF);
+        addr_h: u16 = self.read((temp + 1) & 0x00FF);
+
+        // Concat into full 16 bit address
+        self.addr_abs = (addr_h << 8 | addr_l);
+        self.addr_abs += self.registers.y;
+
+        // If page boundary crossed, add an extra cycle.
+        ternary!(self.addr_abs & 0xFF00 != addr_h << 8, 1, 0);
+
+        return 0;
+    }
 
 
 
