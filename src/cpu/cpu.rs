@@ -63,10 +63,10 @@ impl CPU {
 
 
     // Function fetches data from memory and sets the fetched register to the data
-    fn fetch(&mut self, addrMode: &String) -> u8 {
-        if addrMode == "IMP" {
-            self.registers.fetched = self.bus.read(self.addr_abs) as u8;
-        }
+    fn fetch(&mut self) -> u8 {
+        // if addrMode == "IMP" {
+        //     self.registers.fetched = self.bus.read(self.addr_abs) as u8;
+        // }
         return self.registers.fetched
     }
 
@@ -230,10 +230,7 @@ impl CPU {
         self.addr_abs = (addr_h << 8 | addr_l);
         self.addr_abs += self.registers.y;
 
-        // If page boundary crossed, add an extra cycle.
-        ternary!(self.addr_abs & 0xFF00 != addr_h << 8, 1, 0);
-
-        return 0;
+       return ternary!(self.addr_abs & 0xFF00 != addr_h << 8, 1, 0);
     }
 
 
@@ -466,6 +463,35 @@ impl CPU {
     // Clear overflow flag
     pub fn CLV(&mut self) -> u8 {
         self.registers.get_flag(StatusRegFlags::V) = 0;
+        return 0;
+    }
+
+
+    // Compare accumulator
+    pub fn CMP(&mut self) -> u8 {
+        self.fetch();
+        self.addr_temp = self.registers.a as u16 - self.registers.fetched as u16;
+        self.registers.set_flag(StatusRegFlags::C, self.registers.a >= self.registers.fetched);
+        self.registers.set_flag(StatusRegFlags::Z, self.addr_temp & 0x00FF == 0x0000);
+        self.registers.set_flag(StatusRegFlags::N, self.addr_temp & 0x0080 == 1); // TODO CHECK THIS IS RIGHT
+        return 1;
+    }
+    // Compare X register
+    pub fn CMX(&mut self) -> u8 {
+        self.fetch();
+        self.addr_temp = self.registers.x as u16 - self.registers.fetched as u16;
+        self.registers.set_flag(StatusRegFlags::C, self.registers.x >= self.registers.fetched);
+        self.registers.set_flag(StatusRegFlags::Z, self.addr_temp & 0x00FF == 0x0000);
+        self.registers.set_flag(StatusRegFlags::N, self.addr_temp & 0x0080 == 1); // TODO CHECK THIS IS RIGHT
+        return 0;
+    }
+    // Compare Y register
+    pub fn CMY(&mut self) -> u8 {
+        self.fetch();
+        self.addr_temp = self.registers.x as u16 - self.registers.fetched as u16;
+        self.registers.set_flag(StatusRegFlags::C, self.registers.x >= self.registers.fetched);
+        self.registers.set_flag(StatusRegFlags::Z, self.addr_temp & 0x00FF == 0x0000);
+        self.registers.set_flag(StatusRegFlags::N, self.addr_temp & 0x0080 == 1); // TODO CHECK THIS IS RIGHT
         return 0;
     }
 }
