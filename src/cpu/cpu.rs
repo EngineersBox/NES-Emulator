@@ -331,7 +331,7 @@ impl CPU {
         if self.registers.get_flag(StatusRegFlags::C) == 1 {
             self.cycles += 1;
             self.addr_abs = self.registers.pc + (self.addr_rel as u16);
-            // If over zero page?
+            
             if (self.addr_abs & 0xFF00) != (self.registers.pc & 0xFF00){
                 self.cycles += 1
             }
@@ -345,7 +345,7 @@ impl CPU {
         if self.registers.get_flag(StatusRegFlags::Z) == 1 {
             self.cycles += 1;
             self.addr_abs = self.registers.pc + (self.addr_rel as u16);
-            // If over zero page?
+
             if (self.addr_abs & 0xFF00) != (self.registers.pc & 0xFF00){
                 self.cycles += 1
             }
@@ -385,7 +385,7 @@ impl CPU {
         if self.registers.get_flag(StatusRegFlags::N) == 0 {
             self.cycles += 1;
             self.addr_abs = self.registers.pc + self.addr_rel;
-            // If over zero page?
+            // If over zero page
             if (self.addr_abs & 0xFF00) != (self.registers.pc & 0xFF00){
                 self.cycles += 1
             }
@@ -401,7 +401,7 @@ impl CPU {
         if self.registers.get_flag(StatusRegFlags::Z) == 0 {
             self.cycles += 1;
             self.addr_abs = self.registers.pc + self.addr_rel;
-            // If over zero page?
+
             if (self.addr_abs & 0xFF00) != (self.registers.pc & 0xFF00){
                 self.cycles += 1
             }
@@ -411,7 +411,63 @@ impl CPU {
     }
 
 
+    // Break / force interrupt
+    pub fn BRK(&mut self) -> u8 {
+        // TODO need write functionality to implement this
+        return 0;
+    }
 
+    // Branch if overflow clear
+    pub fn BVC(&mut self) -> u8 {
+        if self.registers.get_flag(StatusRegFlags::V) == 0 {
+            self.cycles += 1;
+            self.addr_abs = self.registers.pc + self.addr_rel;
+
+            if (self.addr_abs & 0xFF00) != (self.registers.pc & 0xFF00){
+                self.cycles += 1
+            }
+            self.registers.pc = self.addr_abs;
+        }
+        return 0;
+    }
+
+    // Branch if overflow set
+    pub fn BVS(&mut self) -> u8 {
+        if self.registers.get_flag(StatusRegFlags::V) == 1 {
+            self.cycles += 1;
+            self.addr_abs = self.registers.pc + self.addr_rel;
+
+            if (self.addr_abs & 0xFF00) != (self.registers.pc & 0xFF00){
+                self.cycles += 1
+            }
+            self.registers.pc = self.addr_abs;
+        }
+        return 0;
+    }
+
+
+    // Clear carry flag
+    pub fn CLC(&mut self) -> u8 {
+        self.registers.get_flag(StatusRegFlags::C) = 0;
+        return 0;
+    }
+    // Clear decimal flag
+    pub fn CDC(&mut self) -> u8 {
+        self.registers.get_flag(StatusRegFlags::D) = 0;
+        return 0;
+    }
+
+    // Clear interrupt flag
+    pub fn CLI(&mut self) -> u8 {
+        self.registers.get_flag(StatusRegFlags::I) = 0;
+        return 0;
+    }
+
+    // Clear overflow flag
+    pub fn CLV(&mut self) -> u8 {
+        self.registers.get_flag(StatusRegFlags::V) = 0;
+        return 0;
+    }
 }
 
 
