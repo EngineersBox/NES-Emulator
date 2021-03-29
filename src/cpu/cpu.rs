@@ -494,6 +494,27 @@ impl CPU {
         self.registers.set_flag(StatusRegFlags::N, self.addr_temp & 0x0080 == 1); // TODO CHECK THIS IS RIGHT
         return 0;
     }
+
+    // Subtract 1 from value at memory location
+    pub fn DEC(&mut self) -> u8 {
+        return 0;
+    }
+
+    // Subtract 1 from X register
+    pub fn DEX(&mut self) -> u8 {
+        self.registers.x -= 1;
+        self.registers.set_flag(StatusRegFlags::Z, self.registers.x == 0x00);
+        self.registers.set_flag(StatusRegFlags::N, self.registers.x & 0x80 == 1);
+        return 0;
+    }
+
+    // Subtract 1 from Y register
+    pub fn DEY(&mut self) -> u8 {
+        self.registers.y -= 1;
+        self.registers.set_flag(StatusRegFlags::Z, self.registers.y == 0x00);
+        self.registers.set_flag(StatusRegFlags::N, self.registers.y & 0x80 == 1);
+        return 0;
+    }
 }
 
 
