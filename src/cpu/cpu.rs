@@ -200,7 +200,7 @@ impl CPU {
     }
 
     // Indirect with X offset Addressing (pointer)
-    pub fn INX(&mut self) -> u8 {
+    pub fn IZX(&mut self) -> u8 {
         // Obtain the data (= another address) at the pc address
         temp: u16 = self.read(self.registers.pc as u16);
         self.registers.pc += 1;
@@ -218,7 +218,7 @@ impl CPU {
     // Indirect with Y offset Addressing (pointer)
     // Slightly different to X offset - offset after
     // 16 bit address is created (not during).
-    pub fn INY(&mut self) -> u8 {
+    pub fn IZY(&mut self) -> u8 {
         // Obtain the data (= another address) at the pc address
         temp: u16 = self.read(self.registers.pc as u16);
         self.registers.pc += 1;
@@ -515,6 +515,44 @@ impl CPU {
         self.registers.set_flag(StatusRegFlags::N, self.registers.y & 0x80 == 1);
         return 0;
     }
+
+    // Exclusive OR (XOR)
+    pub fn EOR(&mut self) -> u8 {
+        self.fetch();
+        self.registers.a = self.registers.a ^ self.registers.fetched;
+        self.registers.set_flag(StatusRegFlags::Z, self.registers.a == 0x00);
+        self.registers.set_flag(StatusRegFlags::Z, self.registers.a & 0x80 == 1);
+        return 1;
+    }
+
+    // Increment fetched memory
+    pub fn INC(&mut self) -> u8 {
+       // TODO Requires write function
+        return 0;
+    }
+
+    // Increment X register
+    pub fn INX(&mut self) -> u8 {
+        self.registers.x += 1;
+        self.registers.set_flag(StatusRegFlags::Z, self.registers.x == 0x00);
+        self.registers.set_flag(StatusRegFlags::Z, self.registers.x & 0x80 == 1);
+        return 0;
+    }
+
+    // Increment Y register
+    pub fn INY(&mut self) -> u8 {
+        self.registers.y += 1;
+        self.registers.set_flag(StatusRegFlags::Z, self.registers.y == 0x00);
+        self.registers.set_flag(StatusRegFlags::Z, self.registers.y & 0x80 == 1);
+        return 0;
+    }
+
+    // Set PC to memory address specified
+    pub fn JMP(&mut self) -> u8 {
+        self.registers.pc = self.addr_abs;
+        return 0;
+    }
+
 }
 
 
