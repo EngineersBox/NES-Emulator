@@ -616,6 +616,102 @@ impl CPU {
         self.registers.set_flag(StatusRegFlags::N, self.registers.a & 0x80 == 1);
         return 1;
     }
+
+    // Pushes a copy of accumulator to the stack
+    pub fn PHA(&mut self) -> u8 {
+        // TODO requires write
+        return 0;
+    }
+
+    // Pushes a copy of status flags onto the stack
+    pub fn PHP(&mut self) -> u8 {
+        // TODO requires write
+        return 0;
+    }
+
+    // Pulls an 8bit value from stack into accumulator
+    pub fn PLA(&mut self) -> u8 {
+        self.registers.sp += 1;
+        self.registers.a = self.read(0x0100 + (self.registers.sp as u16)) as u8; // TODO CHECK
+        self.registers.set_flag(StatusRegFlags::Z, self.registers.a == 0x00);
+        self.registers.set_flag(StatusRegFlags::N, self.registers.a & 0x80 == 1);
+        return 0;
+    }
+
+    // Pull 8bit value from stack into status register flags
+    pub fn PLP(&mut self) -> u8 {
+        self.registers.sp += 1;
+        self.registers.status = self.read(0x0100 + (self.registers.sp as u16)) as u8; // TODO CHECK
+        self.registers.set_flag(StatusRegFlags::U, 1 == 1);
+        return 0;
+    }
+
+    // Rotate left
+
+    pub fn ROL(&mut self) -> u8 {
+        self.fetch();
+
+        self.addr_temp = (self.registers.fetched << 1 | self.registers.get_flag(StatusRegFlags::C) ) as u16;
+        self.registers.set_flag(StatusRegFlags::C,  self.addr_temp & 0xFF00 == 1);
+        self.registers.set_flag(StatusRegFlags::Z,  self.addr_temp & 0x00FF == 0x00);
+        self.registers.set_flag(StatusRegFlags::N,  self.addr_temp & 0x0080 == 1);
+
+        // TODO WRITE REQUIRED HERE
+        return 0;
+    }
+
+
+    // Rotate right
+    pub fn ROR(&mut self) -> u8 {
+        self.fetch();
+
+        self.addr_temp = (self.registers.get_flag(StatusRegFlags::C) << 7 | (self.registers.fetched >> 1)) as u16;
+        self.registers.set_flag(StatusRegFlags::C,  self.registers.fetched & 0x01 == 1);
+        self.registers.set_flag(StatusRegFlags::Z,  self.addr_temp & 0x00FF == 0x00);
+        self.registers.set_flag(StatusRegFlags::N,  self.addr_temp & 0x0080 == 1);
+
+        // TODO WRITE REQUIRED HERE
+        return 0;
+    }
+
+    // Return from interrupt
+    pub fn RTI(&mut self) -> u8 {
+        self.registers.sp += 1;
+        self.registers.status = self.read((0x0100 + self.registers.sp) as u16) as u8;
+        self.registers.status &= !self.registers.get_flag(StatusRegFlags::B);
+        self.registers.status &= !self.registers.get_flag(StatusRegFlags::U);
+
+        self.registers.sp += 1;
+        self.registers.pc =  self.read((0x0100 + self.registers.sp) as u16);
+        self.registers.sp += 1;
+        self.registers.pc |=  self.read((0x0100 + self.registers.sp) as u16) << 8;
+        return 0;
+    }
+
+
+    // Return from subroutine
+    pub fn RTS(&mut self) -> u8 {
+        self.registers.sp += 1;
+        self.registers.pc = self.read((0x0100 + self.registers.sp) as u16);
+        self.registers.sp += 1;
+        self.registers.pc |= self.read((0x0100 + self.registers.sp) as u16) << 8;
+        self.registers.pc += 1;
+        return 0;
+    }
+
+    // uint8_t olc6502::RTS()
+    // {
+    // stkp++;
+    // pc = (uint16_t)read(0x0100 + stkp);
+    // stkp++;
+    // pc |= (uint16_t)read(0x0100 + stkp) << 8;
+    //
+    // pc++;
+    // return 0;
+    // }
+
+
+
 }
 
 
