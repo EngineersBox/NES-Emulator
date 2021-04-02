@@ -553,9 +553,81 @@ impl CPU {
         return 0;
     }
 
+    // Jump to subroutine
+    pub fn JSR(&mut self) -> u8 {
+        // TODO requires write
+        return 0;
+    }
+
+    // Load Accumulator
+    pub fn LDA(&mut self) -> u8 {
+        self.fetch();
+        self.registers.a = self.registers.fetched;
+        self.registers.set_flag(StatusRegFlags::Z, self.registers.a == 0x00);
+        self.registers.set_flag(StatusRegFlags::N, self.registers.a & 0x80 == 1);
+        return 1;
+    }
+
+    // Load X Register
+    pub fn LDX(&mut self) -> u8 {
+        self.fetch();
+        self.registers.x = self.registers.fetched;
+        self.registers.set_flag(StatusRegFlags::Z, self.registers.x == 0x00);
+        self.registers.set_flag(StatusRegFlags::N, self.registers.x & 0x80 == 1);
+        return 1;
+    }
+
+    // Load Y Register
+    pub fn LDY(&mut self) -> u8 {
+        self.fetch();
+        self.registers.y = self.registers.fetched;
+        self.registers.set_flag(StatusRegFlags::Z, self.registers.y == 0x00);
+        self.registers.set_flag(StatusRegFlags::N, self.registers.y & 0x80 == 1); // high byte set
+        return 1;
+    }
+
+    // Logical Shift Left
+    pub fn LSR(&mut self) -> u8 {
+        self.fetch();
+        self.registers.set_flag(StatusRegFlags::C, self.registers.fetched & 0x0001 == 1);
+        self.addr_temp = self.registers.fetched as u16 >> 1;
+        self.registers.set_flag(StatusRegFlags::Z, self.addr_temp == 0x00);
+        self.registers.set_flag(StatusRegFlags::N, self.addr_temp & 0x0080 == 1); // high byte set
+
+        // TODO lookup address mode. If implied. set accumulator = temp & 0x00FF (i.e. bottom portion of addr_temp)
+        // if not implied, write(addr_abs, temp & 0x00FF)
+        // TODO Requires write function
+        return 0;
+
+    }
+
+
+    // No operation
+    pub fn NOP(&mut self) -> u8 {
+        // TODO Every repo i've seen does this differently
+        return 0;
+    }
+
+    // Bitwise logical inclusive OR
+    pub fn ORA(&mut self) -> u8 {
+        self.fetch();
+        self.registers.a = self.registers.a | self.registers.fetched;
+        self.registers.set_flag(StatusRegFlags::Z, self.registers.a == 0x00);
+        self.registers.set_flag(StatusRegFlags::N, self.registers.a & 0x80 == 1);
+        return 1;
+    }
 }
 
 
-
+// fetch();
+// SetFlag(C, fetched & 0x0001);
+// temp = fetched >> 1;
+// SetFlag(Z, (temp & 0x00FF) == 0x0000);
+// SetFlag(N, temp & 0x0080);
+// if (lookup[opcode].addrmode == &olc6502::IMP)
+// a = temp & 0x00FF;
+// else
+// write(addr_abs, temp & 0x00FF);
+// return 0;
 
 
