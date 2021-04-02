@@ -258,24 +258,6 @@ impl CPU {
         return 1;
     }
 
-    // Subtract with carry
-    pub fn SBC(&mut self) -> u8 {
-        let inverted_fetched: u16 = (self.registers.fetched as u16) ^ 0x00FF;
-        let mut temp: u16 = (self.registers.a as u16) + inverted_fetched + (self.registers.get_flag(StatusRegFlags::C) as u16);
-        // Carry flag is set when upper bits (8-16) have a value
-        self.registers.set_flag(StatusRegFlags::C, temp & 0xFF00 != 0);
-        // Zero flag is set when result is 0
-        self.registers.set_flag(StatusRegFlags::Z, (temp & 0x00FF) == 0);
-        // Signed overflow is set on the condition if there is wrap around underflow
-        self.registers.set_flag(StatusRegFlags::V, ((temp ^ (self.registers.a as u16)) & (temp ^ inverted_fetched)) == 0);
-        // Negative flag is set when the most significant bit is set
-        self.registers.set_flag(StatusRegFlags::N, (temp & 0x0080) != 0);
-        // Mask off the last 1 bytes into the 8-bit accumulator
-        self.registers.a = (temp & 0x00FF) as u8;
-        // Some variants of the SBC op have additional cycles
-        return 1;
-    }
-
     // Bitwise AND
     pub fn AND(&mut self) -> u8 {
         // Fetch data
@@ -642,7 +624,7 @@ impl CPU {
     pub fn PLP(&mut self) -> u8 {
         self.registers.sp += 1;
         self.registers.status = self.read(0x0100 + (self.registers.sp as u16)) as u8; // TODO CHECK
-        self.registers.set_flag(StatusRegFlags::U, 1 == 1);
+        self.registers.set_flag(StatusRegFlags::U, true);
         return 0;
     }
 
@@ -699,16 +681,105 @@ impl CPU {
         return 0;
     }
 
-    // uint8_t olc6502::RTS()
-    // {
-    // stkp++;
-    // pc = (uint16_t)read(0x0100 + stkp);
-    // stkp++;
-    // pc |= (uint16_t)read(0x0100 + stkp) << 8;
-    //
-    // pc++;
-    // return 0;
-    // }
+    // Subtract with carry
+    pub fn SBC(&mut self) -> u8 {
+        let inverted_fetched: u16 = (self.registers.fetched as u16) ^ 0x00FF;
+        let mut temp: u16 = (self.registers.a as u16) + inverted_fetched + (self.registers.get_flag(StatusRegFlags::C) as u16);
+        // Carry flag is set when upper bits (8-16) have a value
+        self.registers.set_flag(StatusRegFlags::C, temp & 0xFF00 != 0);
+        // Zero flag is set when result is 0
+        self.registers.set_flag(StatusRegFlags::Z, (temp & 0x00FF) == 0);
+        // Signed overflow is set on the condition if there is wrap around underflow
+        self.registers.set_flag(StatusRegFlags::V, ((temp ^ (self.registers.a as u16)) & (temp ^ inverted_fetched)) == 0);
+        // Negative flag is set when the most significant bit is set
+        self.registers.set_flag(StatusRegFlags::N, (temp & 0x0080) != 0);
+        // Mask off the last 1 bytes into the 8-bit accumulator
+        self.registers.a = (temp & 0x00FF) as u8;
+        // Some variants of the SBC op have additional cycles
+        return 1;
+    }
+
+    // Set carry flag
+    pub fn SEC(&mut self) -> u8 {
+        self.registers.set_flag(StatusRegFlags::C, true);
+        return 0
+    }
+
+
+    // Set decimal flag
+    pub fn SED(&mut self) -> u8 {
+        self.registers.set_flag(StatusRegFlags::D, true);
+        return 0
+    }
+
+    // Set interrupt flag
+    pub fn SEI(&mut self) -> u8 {
+        self.registers.set_flag(StatusRegFlags::I, true);
+        return 0
+    }
+
+    // Store accumulator data in memory
+    pub fn STA(&mut self) -> u8 {
+        // TODO requires write
+        return 0
+    }
+
+    // Store X register data in memory
+    pub fn STX(&mut self) -> u8 {
+        // TODO requires write
+        return 0
+    }
+
+    // Store Y register data in memory
+    pub fn STY(&mut self) -> u8 {
+        // TODO requires write
+        return 0
+    }
+
+    // Transfer accumulator content to x register
+    pub fn TAX(&mut self) -> u8 {
+        self.registers.x = self.registers.a;
+        self.registers.set_flag(StatusRegFlags::Z,  self.registers.x & 0x00FF == 0x00);
+        self.registers.set_flag(StatusRegFlags::N,  self.registers.x & 0x0080 == 1);
+        return 0
+    }
+
+    // Transfer accumulator content to y register
+    pub fn TAY(&mut self) -> u8 {
+        self.registers.y = self.registers.a;
+        self.registers.set_flag(StatusRegFlags::Z,  self.registers.y & 0x00FF == 0x00);
+        self.registers.set_flag(StatusRegFlags::N,  self.registers.y & 0x0080 == 1);
+        return 0
+    }
+
+    // Transfer X register content to the accumulator
+    pub fn TXA(&mut self) -> u8 {
+        self.registers.a = self.registers.x;
+        self.registers.set_flag(StatusRegFlags::Z,  self.registers.a & 0x00FF == 0x00);
+        self.registers.set_flag(StatusRegFlags::N,  self.registers.a & 0x0080 == 1);
+        return 0
+    }
+
+    // Transfer X register content to stack pointer
+    pub fn TXS(&mut self) -> u8 {
+        self.registers.sp = self.registers.x;
+        return 0
+    }
+
+    // Transfer Y register content to the accumulator
+    pub fn TYA(&mut self) -> u8 {
+        self.registers.a = self.registers.y;
+        self.registers.set_flag(StatusRegFlags::Z,  self.registers.a & 0x00FF == 0x00);
+        self.registers.set_flag(StatusRegFlags::N,  self.registers.a & 0x0080 == 1);
+        return 0
+    }
+
+    // Illegal opcodes
+    pub fn XXX() -> u8 {
+        return 0;
+    }
+
+
 
 
 
