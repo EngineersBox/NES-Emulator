@@ -16,6 +16,17 @@ impl Bus {
         } else {
             panic!("Tried to read from an illegal hex address")
         }
+        return 0x00;
+    }
+
+    // Write to RAM
+    pub fn write(&self, address: u16, data: u8) -> () {
+        if utils::check_hex_range(address){
+            self.ram[address] = data;
+        } else {
+            panic!("Tried to write to an illegal hex address")
+        }
+
     }
 }
 

@@ -284,7 +284,7 @@ impl CPU {
         // Negative flag is set if the most significant bit of the result is set
         self.registers.set_flag(StatusRegFlags::N, shifted & 0x80 != 0);
 
-        // TODO: need to build the address mode functions
+        // TODO: need to build the address mode functions. requires write
         //
         // If ASL address mode == implied, then set a = shifted & 0x00FF
         // else write shifted & 0x00FF to the abs address chosen with
@@ -784,17 +784,5 @@ impl CPU {
 
 
 }
-
-
-// fetch();
-// SetFlag(C, fetched & 0x0001);
-// temp = fetched >> 1;
-// SetFlag(Z, (temp & 0x00FF) == 0x0000);
-// SetFlag(N, temp & 0x0080);
-// if (lookup[opcode].addrmode == &olc6502::IMP)
-// a = temp & 0x00FF;
-// else
-// write(addr_abs, temp & 0x00FF);
-// return 0;
 
 
