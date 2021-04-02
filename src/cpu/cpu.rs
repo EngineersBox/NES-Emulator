@@ -39,10 +39,12 @@ impl CPU {
 
         }
     }
-
-   pub fn read(&self, address: u16) -> u16 {
+    pub fn read(&self, address: u16) -> u16 {
         return self.bus.read(address);
    }
+    pub fn write(&self, address: u16, data: u8) -> () {
+        self.bus.write(address,data);
+    }
 
     // Reset CPU to default state
     // Registers set as per:
@@ -121,13 +123,14 @@ impl CPU {
     pub fn ABX(&mut self) -> u8 {
         // Convert low and high to u16
         let addr_l: u16 = self.read(self.registers.pc as u16);
+
         self.registers.pc += 1;
         let addr_h: u16 = self.read(self.registers.pc as u16);
+
         self.registers.pc += 1;
         self.addr_abs = addr_l + (addr_h << 8); // concat two u8 -> u16
         self.addr_abs += self.registers.x; // offset by x register
 
-        // If bytes haven't finished addition, add an extra cycle // TODO WHY
         return ternary!(((self.addr_abs & 0xFF00) != (addr_h << 8)), 1, 0);
     }
 
@@ -135,13 +138,14 @@ impl CPU {
     pub fn ABY(&mut self) -> u8 {
         // Convert low and high to u16
         let addr_l: u16 = self.read(self.registers.pc as u16);
+
         self.registers.pc += 1;
         let addr_h: u16 = self.read(self.registers.pc as u16);
-        self.registers.pc += 1;
-        self.addr_abs = addr_l + (addr_h << 8); // concat two u8 -> u16
-        self.addr_abs += self.registers.y; // offset by y register
 
-        // If bytes haven't finished addition, add an extra cycle // TODO WHY
+        self.registers.pc += 1;
+        self.addr_abs = addr_l + (addr_h << 8);
+        self.addr_abs += self.registers.y;
+
         return ternary!(((self.addr_abs & 0xFF00) != (addr_h << 8)), 1, 0);
     }
 
@@ -284,10 +288,7 @@ impl CPU {
         // Negative flag is set if the most significant bit of the result is set
         self.registers.set_flag(StatusRegFlags::N, shifted & 0x80 != 0);
 
-        // TODO: need to build the address mode functions. requires write
-        //
-        // If ASL address mode == implied, then set a = shifted & 0x00FF
-        // else write shifted & 0x00FF to the abs address chosen with
+        // TODO: need address mode lookup
         return 1
     }
 
@@ -392,7 +393,20 @@ impl CPU {
 
     // Break / force interrupt
     pub fn BRK(&mut self) -> u8 {
-        // TODO need write functionality to implement this
+        self.registers.pc += 1;
+        self.registers.set_flag(StatusRegFlags::I, true);
+        self.write((0x0100 + self.registers.sp) as u16, ((self.registers.pc >> 8) & 0x00FF) as u8);
+        self.registers.sp -= 1;
+        self.write((0x0100 + self.registers.sp) as u16, (self.registers.pc & 0x00FF) as u8);
+        self.registers.sp -= 1;
+
+        self.registers.set_flag(StatusRegFlags::B, true);
+        self.write((0x0100 + self.registers.sp) as u16, self.registers.status);
+        self.registers.sp -= 1;
+        self.registers.set_flag(StatusRegFlags::B, false);
+
+        // Load interrupt vector
+        self.registers.pc = self.read(0xFFFE) | self.read(0xFFFF) << 8;
         return 0;
     }
 
@@ -455,7 +469,7 @@ impl CPU {
         self.addr_temp = self.registers.a as u16 - self.registers.fetched as u16;
         self.registers.set_flag(StatusRegFlags::C, self.registers.a >= self.registers.fetched);
         self.registers.set_flag(StatusRegFlags::Z, self.addr_temp & 0x00FF == 0x0000);
-        self.registers.set_flag(StatusRegFlags::N, self.addr_temp & 0x0080 == 1); // TODO CHECK THIS IS RIGHT
+        self.registers.set_flag(StatusRegFlags::N, self.addr_temp & 0x0080 == 1);
         return 1;
     }
     // Compare X register
@@ -464,7 +478,7 @@ impl CPU {
         self.addr_temp = self.registers.x as u16 - self.registers.fetched as u16;
         self.registers.set_flag(StatusRegFlags::C, self.registers.x >= self.registers.fetched);
         self.registers.set_flag(StatusRegFlags::Z, self.addr_temp & 0x00FF == 0x0000);
-        self.registers.set_flag(StatusRegFlags::N, self.addr_temp & 0x0080 == 1); // TODO CHECK THIS IS RIGHT
+        self.registers.set_flag(StatusRegFlags::N, self.addr_temp & 0x0080 == 1);
         return 0;
     }
     // Compare Y register
@@ -473,7 +487,7 @@ impl CPU {
         self.addr_temp = self.registers.x as u16 - self.registers.fetched as u16;
         self.registers.set_flag(StatusRegFlags::C, self.registers.x >= self.registers.fetched);
         self.registers.set_flag(StatusRegFlags::Z, self.addr_temp & 0x00FF == 0x0000);
-        self.registers.set_flag(StatusRegFlags::N, self.addr_temp & 0x0080 == 1); // TODO CHECK THIS IS RIGHT
+        self.registers.set_flag(StatusRegFlags::N, self.addr_temp & 0x0080 == 1);
         return 0;
     }
 
@@ -503,21 +517,26 @@ impl CPU {
         self.fetch();
         self.registers.a = self.registers.a ^ self.registers.fetched;
         self.registers.set_flag(StatusRegFlags::Z, self.registers.a == 0x00);
-        self.registers.set_flag(StatusRegFlags::Z, self.registers.a & 0x80 == 1);
+        self.registers.set_flag(StatusRegFlags::N, self.registers.a & 0x80 == 1);
         return 1;
     }
 
     // Increment fetched memory
     pub fn INC(&mut self) -> u8 {
-       // TODO Requires write function
+        self.fetch();
+        self.addr_temp = (self.registers.fetched + 1) as u16;
+        self.write(self.addr_abs, (self.addr_temp & 0x00FF) as u8);
+        self.registers.set_flag(StatusRegFlags::Z, self.addr_temp & 0x00FF == 0x00);
+        self.registers.set_flag(StatusRegFlags::N, self.addr_temp & 0x80 == 1);
         return 0;
     }
+
 
     // Increment X register
     pub fn INX(&mut self) -> u8 {
         self.registers.x += 1;
         self.registers.set_flag(StatusRegFlags::Z, self.registers.x == 0x00);
-        self.registers.set_flag(StatusRegFlags::Z, self.registers.x & 0x80 == 1);
+        self.registers.set_flag(StatusRegFlags::N, self.registers.x & 0x80 == 1);
         return 0;
     }
 
@@ -525,7 +544,7 @@ impl CPU {
     pub fn INY(&mut self) -> u8 {
         self.registers.y += 1;
         self.registers.set_flag(StatusRegFlags::Z, self.registers.y == 0x00);
-        self.registers.set_flag(StatusRegFlags::Z, self.registers.y & 0x80 == 1);
+        self.registers.set_flag(StatusRegFlags::N, self.registers.y & 0x80 == 1);
         return 0;
     }
 
@@ -537,9 +556,16 @@ impl CPU {
 
     // Jump to subroutine
     pub fn JSR(&mut self) -> u8 {
-        // TODO requires write
+        self.registers.pc -= 1;
+        self.write((0x0100 + self.registers.sp) as u16, ((self.registers.pc >> 8) & 0x00FF) as u8);
+        self.registers.sp -=1;
+        self.write((0x0100 + self.registers.sp) as u16, (self.registers.pc & 0x00FF) as u8);
+        self.registers.sp -=1;
+
+        self.registers.pc = self.addr_abs;
         return 0;
     }
+
 
     // Load Accumulator
     pub fn LDA(&mut self) -> u8 {
@@ -577,8 +603,6 @@ impl CPU {
         self.registers.set_flag(StatusRegFlags::N, self.addr_temp & 0x0080 == 1); // high byte set
 
         // TODO lookup address mode. If implied. set accumulator = temp & 0x00FF (i.e. bottom portion of addr_temp)
-        // if not implied, write(addr_abs, temp & 0x00FF)
-        // TODO Requires write function
         return 0;
 
     }
@@ -601,21 +625,27 @@ impl CPU {
 
     // Pushes a copy of accumulator to the stack
     pub fn PHA(&mut self) -> u8 {
-        // TODO requires write
+        self.write((0x0100 + self.registers.sp) as u16, self.registers.a);
+        self.registers.sp -= 1;
         return 0;
     }
 
     // Pushes a copy of status flags onto the stack
     pub fn PHP(&mut self) -> u8 {
-        // TODO requires write
+        self.write((0x0100 + self.registers.sp) as u16,
+                   self.registers.status | self.registers.get_flag(StatusRegFlags::B) | self.registers.get_flag(StatusRegFlags::B));
+        self.registers.set_flag(StatusRegFlags::B, true);
+        self.registers.set_flag(StatusRegFlags::U, true);
+        self.registers.sp -= 1;
+
         return 0;
     }
+
 
     // Pulls an 8bit value from stack into accumulator
     pub fn PLA(&mut self) -> u8 {
         self.registers.sp += 1;
-        self.registers.a = self.read(0x0100 + (self.registers.sp as u16)) as u8; // TODO CHECK
-        self.registers.set_flag(StatusRegFlags::Z, self.registers.a == 0x00);
+        self.registers.a = self.read(0x0100 + (self.registers.sp as u16)) as u8; // TODO why do all read functions start at 0100.
         self.registers.set_flag(StatusRegFlags::N, self.registers.a & 0x80 == 1);
         return 0;
     }
@@ -623,7 +653,7 @@ impl CPU {
     // Pull 8bit value from stack into status register flags
     pub fn PLP(&mut self) -> u8 {
         self.registers.sp += 1;
-        self.registers.status = self.read(0x0100 + (self.registers.sp as u16)) as u8; // TODO CHECK
+        self.registers.status = self.read(0x0100 + (self.registers.sp as u16)) as u8;
         self.registers.set_flag(StatusRegFlags::U, true);
         return 0;
     }
@@ -638,7 +668,7 @@ impl CPU {
         self.registers.set_flag(StatusRegFlags::Z,  self.addr_temp & 0x00FF == 0x00);
         self.registers.set_flag(StatusRegFlags::N,  self.addr_temp & 0x0080 == 1);
 
-        // TODO WRITE REQUIRED HERE
+        // TODO address lookup required
         return 0;
     }
 
@@ -720,19 +750,19 @@ impl CPU {
 
     // Store accumulator data in memory
     pub fn STA(&mut self) -> u8 {
-        // TODO requires write
+        self.write(self.addr_abs, self.registers.a);
         return 0
     }
 
     // Store X register data in memory
     pub fn STX(&mut self) -> u8 {
-        // TODO requires write
+        self.write(self.addr_abs, self.registers.x);
         return 0
     }
 
     // Store Y register data in memory
     pub fn STY(&mut self) -> u8 {
-        // TODO requires write
+        self.write(self.addr_abs, self.registers.y);
         return 0
     }
 
