@@ -56,11 +56,16 @@ impl CPU {
         self.registers.x = 0x00;
         self.registers.y = 0x00;
         self.registers.sp = 0xFD;
-        self.registers.fetched = 0x00;
+        self.registers.status = 0x00 | self.registers.get_flag(StatusRegFlags::U);
+
         // Set program counter by reading from reset vector (0xFFFD - 0xFFFC)
         self.registers.pc = ( self.bus.read(0xFFFD) << 8) + self.bus.read(0xFFFC);
 
-        // TODO Set status flags on reset
+        self.addr_abs = 0x0000;
+        self.addr_rel = 0x0000;
+        self.registers.fetched = 0x00;
+
+        self.cycles = 8;
     }
 
 
@@ -75,14 +80,6 @@ impl CPU {
     pub fn execute_instruction(&mut self, opcode: Opcode) {
         // TODO: Implement Base64 compressed opcode invocation to method
     }
-
-    // NOTE: There will be no cpu::fetch() calls in the operations as we
-    //       can use multiple calls in a closure so it would be better to
-    //       pair it there rather than here.
-    //
-    // For example:
-    // |_| -> () { fetch(); self.operations.ADC(); }
-
 
     /*
 
@@ -808,11 +805,6 @@ impl CPU {
     pub fn XXX() -> u8 {
         return 0;
     }
-
-
-
-
-
 }
 
 
