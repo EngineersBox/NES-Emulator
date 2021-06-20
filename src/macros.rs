@@ -1,7 +1,11 @@
 #[macro_export]
 macro_rules! ternary {
     ($condition:expr, $v1:expr, $v2:expr) => {
-        if $condition { $v1 } else { $v2 };
+        if $condition {
+            $v1
+        } else {
+            $v2
+        };
     };
 }
 
@@ -22,7 +26,7 @@ macro_rules! if_let_some {
         } else {
             return $else_value;
         };
-    }
+    };
 }
 
 #[macro_export]
@@ -32,7 +36,7 @@ macro_rules! if_let_ok {
             Ok(it) => it,
             Err(err) => return $else_value(err),
         };
-    }
+    };
 }
 
 #[macro_export]
@@ -43,9 +47,9 @@ macro_rules! try_except_return {
             Err(e) => {
                 error!(crate::LOGGER, "{}: {}", $msg, e);
                 return;
-            },
+            }
         }
-    }
+    };
 }
 
 #[macro_export]
@@ -56,16 +60,16 @@ macro_rules! try_except_return_default {
             Err(e) => {
                 error!(crate::LOGGER, "{}: {}", $msg, e);
                 $default_value
-            },
+            }
         }
-    }
+    };
 }
 
 #[macro_export]
 macro_rules! inc {
     ($variable:expr) => {
         $variable += 1;
-    }
+    };
 }
 
 #[macro_export]
@@ -75,5 +79,5 @@ macro_rules! option_same_block {
             return Option::Some($some_statement);
         }
         return Option::None;
-    }
+    };
 }

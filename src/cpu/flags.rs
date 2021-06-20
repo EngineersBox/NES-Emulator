@@ -1,6 +1,6 @@
 // Defines the 8 flags for the status register
 #[derive(Debug)]
-pub enum StatusRegFlags{
+pub enum StatusRegFlags {
     C = (1 << 0), // Carry bit
     Z = (1 << 1), // Zero
     I = (1 << 2), // Disable interrupt

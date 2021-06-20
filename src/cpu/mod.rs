@@ -1,6 +1,6 @@
-pub mod opcode_compression;
+pub mod bus;
 pub mod cpu;
 pub mod flags;
-pub mod bus;
-pub mod utils;
+pub mod opcode_compression;
 mod registers;
+pub mod utils;

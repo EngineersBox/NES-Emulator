@@ -4,7 +4,7 @@ type Opcode = u32;
 pub struct Registers {
     pub a: u32,
     pub b: u32,
-    pub c: u32
+    pub c: u32,
 }
 
 fn char_to_u32(c: char) -> u32 {
@@ -34,19 +34,23 @@ pub fn execute_instruction(registers: &mut Registers, opcode: Opcode) {
 
     macro_rules! t {
         ($pattern: expr, $result: stmt) => {
-            if (decode_base64(char_to_u32($pattern.chars().nth((opcode / 6u32) as usize).unwrap())) & (1u32 << (opcode % 6u32))) == 0 {
+            if (decode_base64(char_to_u32(
+                $pattern.chars().nth((opcode / 6u32) as usize).unwrap(),
+            )) & (1u32 << (opcode % 6u32)))
+                == 0
+            {
                 $result
             }
         };
     }
 
-    t!(String::from("/DAAAAAAAAAA"), temp = registers.a);  // LDR a  (opcodes: 0,1,2,3,4,5,6,7)
+    t!(String::from("/DAAAAAAAAAA"), temp = registers.a); // LDR a  (opcodes: 0,1,2,3,4,5,6,7)
     t!(String::from("zAAAAAAAAAAA"), temp += registers.b); // ADD b  (opcodes: 0,1,    4,5,   )
     t!(String::from("MDAAAAAAAAAA"), temp -= registers.b); // SUB b  (opcodes:     2,3,    6,7)
     t!(String::from("iAAAAAAAAAAA"), temp += registers.c); // ADD c  (opcodes:   1,      5,   )
     t!(String::from("ICAAAAAAAAAA"), temp -= registers.c); // SUB c  (opcodes:       3,      7)
-    t!(String::from("/DAAAAAAAAAA"), registers.a = temp);  // STR a  (opcodes: 0,1,2,3,4,5,6,7)
-    t!(String::from("PAAAAAAAAAAA"), temp = registers.a);  // UPD F  (opcodes: 0,1,2,3        )
+    t!(String::from("/DAAAAAAAAAA"), registers.a = temp); // STR a  (opcodes: 0,1,2,3,4,5,6,7)
+    t!(String::from("PAAAAAAAAAAA"), temp = registers.a); // UPD F  (opcodes: 0,1,2,3        )
 }
 
 // AN EXAMPLE USAGE:

@@ -1,8 +1,8 @@
 mod cpu;
 mod macros;
 
-use std::fs::{File, OpenOptions};
 use std::fs;
+use std::fs::{File, OpenOptions};
 use std::sync::Mutex;
 
 use lazy_static::lazy_static;
@@ -13,20 +13,24 @@ use slog_term::{FullFormat, TermDecorator};
 
 #[macro_use]
 extern crate slog;
-extern crate slog_term;
+extern crate lazy_static;
 extern crate slog_async;
 extern crate slog_json;
-extern crate lazy_static;
+extern crate slog_term;
 
-fn initialize_logging() ->  slog::Logger {
+fn initialize_logging() -> slog::Logger {
     let log_path: &str = "logs/";
     let directory_creation_message: &str;
     match fs::create_dir(log_path) {
-        Ok(_) => { directory_creation_message = "Created logging directory"; },
-        Err(_) => { directory_creation_message = "Logging directory already exists, skipping";}
+        Ok(_) => {
+            directory_creation_message = "Created logging directory";
+        }
+        Err(_) => {
+            directory_creation_message = "Logging directory already exists, skipping";
+        }
     }
 
-    let log_file_path: String = format!("{}{}{}",log_path,chrono::Utc::now().to_string(),".log");
+    let log_file_path: String = format!("{}{}{}", log_path, chrono::Utc::now().to_string(), ".log");
     let file: File = OpenOptions::new()
         .create(true)
         .write(true)
@@ -49,7 +53,7 @@ fn initialize_logging() ->  slog::Logger {
         .fuse();
     let log: Logger = Logger::root(both, o!());
 
-    info!(log,"{}", directory_creation_message);
+    info!(log, "{}", directory_creation_message);
     log
 }
 
